@@ -69,8 +69,8 @@ describe('DeterministicEvaluator (AST Analysis)', () => {
       export interface IParkingStrategy { findSlot(): void; }
       export class NearestStrategy implements IParkingStrategy { findSlot(): void {} }
       export class ParkingSlot {
-        public id: string;
-        public isOccupied: boolean;
+        public id: string = '';
+        public isOccupied: boolean = false;
       }
     `;
 
@@ -124,5 +124,56 @@ describe('DeterministicEvaluator (AST Analysis)', () => {
     expect(res.overallScore).toBe(0);
     expect(res.feedback.deterministic.passed).toBe(false);
     expect(res.feedback.deterministic.ruleFeedbacks[0].message).toContain('TypeScript code failed to parse');
+  });
+
+  // FIX 2 REGRESSION TEST: Semantically / Type-Invalid TypeScript
+  it('detects semantically invalid TypeScript (type errors) and fails evaluation cleanly with 0 score', async () => {
+    const invalidCode = `
+      class Test {
+        private value: number = "not a number";
+      }
+    `;
+
+    const sub: Submission = { id: 'sub-semantic-error', attemptId: 'att-semantic-error', code: invalidCode, language: 'typescript', submittedAt: new Date() };
+    const res = await evaluator.evaluate(testProblem, sub);
+
+    expect(res.status).toBe('COMPLETE');
+    expect(res.overallScore).toBe(0);
+    expect(res.feedback.deterministic.passed).toBe(false);
+    expect(res.feedback.deterministic.ruleFeedbacks[0].message).toContain('TypeScript code failed to parse');
+  });
+
+  // FIX 3 TESTS: Continuous rule contribution consistency
+  it('proves rule contributions are based on continuous scores and mathematically consistent with weighted overall score', async () => {
+    const code = `
+      export interface IParkingStrategy { findSlot(): void; }
+      export class NearestStrategy implements IParkingStrategy { findSlot(): void {} }
+      export class ParkingSlot {
+        private id: string;
+        constructor(id: string) { this.id = id; }
+        public getId(): string { return this.id; }
+      }
+    `;
+
+    const sub: Submission = { id: 'sub-continuous', attemptId: 'att-continuous', code, language: 'typescript', submittedAt: new Date() };
+    const res = await evaluator.evaluate(testProblem, sub);
+
+    const ruleFeedbacks = res.feedback.deterministic.ruleFeedbacks;
+    const weights: Record<string, number> = {
+      CLASS_COUNT: 0.20,
+      GOD_CLASS: 0.20,
+      ENCAPSULATION: 0.20,
+      INTERFACE_USAGE: 0.25,
+      NAMING: 0.15,
+    };
+
+    let continuousSum = 0;
+    for (const rule of ruleFeedbacks) {
+      const weight = weights[rule.category] || 0.20;
+      const continuousContribution = rule.score * weight;
+      continuousSum += continuousContribution;
+    }
+
+    expect(Math.round(continuousSum)).toBe(res.overallScore);
   });
 });

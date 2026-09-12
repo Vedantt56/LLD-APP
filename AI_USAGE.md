@@ -4,11 +4,11 @@ This document logs real AI-assisted architectural decisions made during the deve
 
 ---
 
-### Decision 1: Separation of Attempt Lifecycle Status vs. Evaluation Outcome Status
+### Decision 1: Separation of Attempt Lifecycle State from Evaluation Outcome & Fallback Handling
 
-- **What was suggested**: AI suggested adding `'EVALUATED_PARTIAL'` as an enum value directly inside `AttemptStatus` to represent attempts that received deterministic-only feedback when LLM timed out.
+- **What was suggested**: AI suggested adding `'EVALUATED_PARTIAL'` as an enum value directly inside `AttemptStatus`, and transitioning attempt status to `'FAILED'` whenever `LLMEvaluator` timed out or threw an error.
 - **Accepted / Rejected**: **REJECTED** by human engineer.
-- **Rationale**: Adding fallback flags to `AttemptStatus` couples the domain lifecycle state machine with specific evaluation execution details. The engineer directed that `AttemptStatus` remain strictly `'DRAFT' | 'SUBMITTED' | 'EVALUATING' | 'EVALUATED' | 'FAILED'`, while partial evaluation fallback is captured cleanly inside `EvaluationResult.status` (`'COMPLETE' | 'PARTIAL'`).
+- **Rationale**: Adding fallback flags or execution outcomes to `AttemptStatus` couples the domain lifecycle state machine with specific evaluation execution details. The engineer directed that `AttemptStatus` remain strictly `'DRAFT' | 'SUBMITTED' | 'EVALUATING' | 'EVALUATED' | 'FAILED'`. Fallback evaluation is captured cleanly inside `EvaluationResult.status` (`'COMPLETE' | 'PARTIAL'`). LLM timeouts/failures are an expected fallback path retaining deterministic feedback, so the attempt transitions to `'EVALUATED'`; only catastrophic unhandled system failures transition an attempt to `'FAILED'`.
 
 ---
 
@@ -36,15 +36,7 @@ This document logs real AI-assisted architectural decisions made during the deve
 
 ---
 
-### Decision 5: Disambiguating LLM Fallback from System Failure
-
-- **What was suggested**: AI suggested transitioning attempt status to `'FAILED'` whenever `LLMEvaluator` threw an error or timed out.
-- **Accepted / Rejected**: **REJECTED** by human engineer.
-- **Rationale**: LLM timeouts/failures are an expected fallback path where deterministic feedback is retained and returned with `EvaluationResult.status = 'PARTIAL'`, so the attempt status correctly transitions to `'EVALUATED'`. Only catastrophic unhandled system failures transition attempt status to `'FAILED'`.
-
----
-
-### Decision 6: Single Rolling Model Alias (`gemini-flash-latest`) & Pre-Submission Language Validation
+### Decision 5: Single Rolling Model Alias (`gemini-flash-latest`) & Pre-Submission Language Validation
 
 - **What was suggested**: AI initially suggested a multi-model cascade loop trying multiple model strings in sequence inside `LLMEvaluator`, and catching language validation errors inside `AttemptService`'s evaluation try/catch (which transitioned attempts to `FAILED`).
 - **Accepted / Rejected**: **REJECTED** by human engineer.

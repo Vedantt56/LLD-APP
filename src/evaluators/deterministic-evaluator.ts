@@ -1,4 +1,4 @@
-import { Project, SourceFile, ScriptTarget } from 'ts-morph';
+import { Project, SourceFile, ScriptTarget, DiagnosticCategory } from 'ts-morph';
 import { Problem } from '../domain/problem';
 import { Submission } from '../domain/submission';
 import {
@@ -23,7 +23,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
 
     const sourceFile = project.createSourceFile('submission.ts', submission.code, { overwrite: true });
 
-    // Handle syntax / parse errors gracefully
+    // Handle syntax / parse / semantic type errors gracefully
     const syntaxErrors = this.checkSyntaxErrors(sourceFile);
     if (syntaxErrors.length > 0) {
       const failedResult: DeterministicEvaluationResult = {
@@ -101,8 +101,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
     const errors: string[] = [];
 
     for (const diag of diagnostics) {
-      const code = diag.getCode();
-      if (code >= 1000 && code < 2000) {
+      if (diag.getCategory() === DiagnosticCategory.Error) {
         const message = diag.getMessageText();
         const text = typeof message === 'string' ? message : message.getMessageText();
         errors.push(text);

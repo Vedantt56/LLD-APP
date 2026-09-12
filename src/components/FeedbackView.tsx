@@ -63,8 +63,10 @@ export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
         <div className="p-4 space-y-3">
           {deterministic.ruleFeedbacks.map((rule) => {
             const weight = RULE_WEIGHTS[rule.category as keyof typeof RULE_WEIGHTS] || 0.20;
-            const maxPoints = Math.round(weight * 100);
-            const earnedPoints = Math.round((rule.score * maxPoints) / 100);
+            const maxPoints = weight * 100;
+            const earnedPoints = rule.score * weight;
+            const displayedEarned = earnedPoints.toFixed(1);
+            const displayedMax = maxPoints.toFixed(0);
 
             return (
               <div
@@ -86,7 +88,7 @@ export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
                 </div>
 
                 <div className="font-mono text-xs font-bold bg-white px-2 py-1 rounded border shadow-xs ml-3 whitespace-nowrap">
-                  {earnedPoints} / {maxPoints}
+                  {displayedEarned} / {displayedMax}
                 </div>
               </div>
             );
