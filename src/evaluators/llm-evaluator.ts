@@ -93,6 +93,8 @@ const GEMINI_RESPONSE_SCHEMA: Schema = {
   required: ['overallScore', 'rubricScores', 'strengths', 'improvements'],
 };
 
+export const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
+
 export class LLMEvaluator implements EvaluationStrategy {
   private apiKey: string | undefined;
   private timeoutMs: number;
@@ -101,7 +103,7 @@ export class LLMEvaluator implements EvaluationStrategy {
   constructor(options?: LLMEvaluatorOptions) {
     this.apiKey = options?.apiKey || process.env.GEMINI_API_KEY;
     this.timeoutMs = options?.timeoutMs || 20000; // Default 20 seconds timeout
-    this.modelName = options?.modelName || 'gemini-3.5-flash';
+    this.modelName = options?.modelName || process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   }
 
   async evaluate(problem: Problem, submission: Submission): Promise<EvaluationResult> {
@@ -172,48 +174,26 @@ Return your evaluation as a valid JSON object matching the requested schema. Do 
       }, this.timeoutMs);
     });
 
-    const candidateModels = Array.from(
-      new Set([
-        this.modelName,
-        'gemini-3.5-flash',
-        'gemini-3.6-flash',
-        'gemini-flash-latest',
-        'gemini-2.5-pro',
-      ])
-    );
-
     const apiPromise = (async () => {
-      let lastError: unknown;
+      try {
+        const response = await ai.models.generateContent({
+          model: this.modelName,
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: GEMINI_RESPONSE_SCHEMA,
+            temperature: 0.2,
+          },
+        });
 
-      for (const model of candidateModels) {
-        try {
-          const response = await ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              responseSchema: GEMINI_RESPONSE_SCHEMA,
-              temperature: 0.2,
-            },
-          });
-
-          const text = response.text;
-          if (text) {
-            return text;
-          }
-        } catch (err) {
-          lastError = err;
-          const msg = (err as Error).message || '';
-          console.warn(`[LLMEvaluator] Model '${model}' failed (${msg}). Trying next candidate model if available...`);
-          // Try next candidate model on any API/capacity/404/503 error
-          continue;
+        const text = response.text;
+        if (text) {
+          return text;
         }
+        throw new LLMApiError('Gemini API returned an empty response text');
+      } catch (err) {
+        throw new LLMApiError((err as Error).message || 'Gemini API call failed', err);
       }
-
-      throw new LLMApiError(
-        (lastError as Error)?.message || 'All Gemini model candidates failed',
-        lastError
-      );
     })();
 
     try {

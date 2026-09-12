@@ -14,7 +14,6 @@ describe('LLMEvaluator (Mocked & Isolated)', () => {
     slug: 'parking-lot',
     description: 'Parking Lot LLD',
     requirements: [],
-    sampleStarterCode: '',
     createdAt: new Date(),
     updatedAt: new Date(),
   };

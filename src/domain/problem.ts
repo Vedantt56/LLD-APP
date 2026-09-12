@@ -11,7 +11,6 @@ export interface Problem {
   slug: 'parking-lot' | 'elevator-system';
   description: string;
   requirements: ProblemRequirement[];
-  sampleStarterCode: string;
   createdAt: Date;
   updatedAt: Date;
 }

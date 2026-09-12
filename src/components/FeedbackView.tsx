@@ -1,19 +1,11 @@
 'use client';
 
 import React from 'react';
-import { EvaluationResult } from '../domain/evaluation';
+import { EvaluationResult, RULE_WEIGHTS } from '../domain/evaluation';
 
 interface FeedbackViewProps {
   evaluationResult: EvaluationResult | null;
 }
-
-const DETERMINISTIC_MAX_SCORES = {
-  CLASS_COUNT: 20,
-  GOD_CLASS: 20,
-  ENCAPSULATION: 20,
-  INTERFACE_USAGE: 25,
-  NAMING: 15,
-} as const;
 
 export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
   if (!evaluationResult) {
@@ -70,10 +62,9 @@ export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
 
         <div className="p-4 space-y-3">
           {deterministic.ruleFeedbacks.map((rule) => {
-            const maxPoints =
-              DETERMINISTIC_MAX_SCORES[
-                rule.category as keyof typeof DETERMINISTIC_MAX_SCORES
-              ] || 20;
+            const weight = RULE_WEIGHTS[rule.category as keyof typeof RULE_WEIGHTS] || 0.20;
+            const maxPoints = Math.round(weight * 100);
+            const earnedPoints = Math.round((rule.score * maxPoints) / 100);
 
             return (
               <div
@@ -95,7 +86,7 @@ export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
                 </div>
 
                 <div className="font-mono text-xs font-bold bg-white px-2 py-1 rounded border shadow-xs ml-3 whitespace-nowrap">
-                  {rule.passed ? `${maxPoints}/${maxPoints}` : `0/${maxPoints}`}
+                  {earnedPoints} / {maxPoints}
                 </div>
               </div>
             );
@@ -108,7 +99,7 @@ export function FeedbackView({ evaluationResult }: FeedbackViewProps) {
         <div className="bg-gray-100 px-4 py-3 border-b flex items-center justify-between">
           <h3 className="font-bold text-gray-800 text-md flex items-center space-x-2">
             <span>LLM OO Design Review</span>
-            <span className="text-xs font-normal text-gray-500">(gemini-3.5-flash)</span>
+            <span className="text-xs font-normal text-gray-500">(gemini-flash-latest)</span>
           </h3>
           {llm && (
             <span className="text-sm font-semibold text-gray-700">

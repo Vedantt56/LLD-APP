@@ -3,9 +3,18 @@ import { Submission } from './submission';
 
 export type EvaluationStatus = 'COMPLETE' | 'PARTIAL';
 
+export const RULE_WEIGHTS = {
+  CLASS_COUNT: 0.20,
+  GOD_CLASS: 0.20,
+  ENCAPSULATION: 0.20,
+  INTERFACE_USAGE: 0.25,
+  NAMING: 0.15,
+} as const;
+
 export interface DeterministicRuleFeedback {
   ruleId: string;
   category: 'ENCAPSULATION' | 'CLASS_COUNT' | 'INTERFACE_USAGE' | 'NAMING' | 'GOD_CLASS';
+  score: number; // 0-100 continuous score computed by rule function
   passed: boolean;
   message: string;
   details?: Record<string, unknown>;

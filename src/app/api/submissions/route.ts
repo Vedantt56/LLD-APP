@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AttemptService } from '@/services/attempt-service';
 import { InvalidStateTransitionError } from '@/domain/attempt';
-import { InvalidTypeScriptSubmissionError } from '@/validators/typescript-validator';
+import { InvalidTypeScriptSubmissionError, EmptySubmissionError } from '@/validators/typescript-validator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    if (error instanceof InvalidTypeScriptSubmissionError) {
+    if (
+      error instanceof InvalidTypeScriptSubmissionError ||
+      error instanceof EmptySubmissionError
+    ) {
       return NextResponse.json(
         { error: error.message },
         { status: 400 }

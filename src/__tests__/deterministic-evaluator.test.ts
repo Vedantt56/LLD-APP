@@ -18,7 +18,6 @@ describe('DeterministicEvaluator (AST Analysis)', () => {
         expectedInterfaces: ['IParkingStrategy'],
       },
     ],
-    sampleStarterCode: '',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -44,6 +43,25 @@ describe('DeterministicEvaluator (AST Analysis)', () => {
     expect(res.status).toBe('COMPLETE');
     expect(res.overallScore).toBe(100);
     expect(res.feedback.deterministic.passed).toBe(true);
+  });
+
+  it('asserts partial rule score (e.g. 1 class yields 60 score on CLASS_COUNT) matches returned rule.score and earned points', async () => {
+    const code = `
+      export class SingleClass {
+        private name: string;
+        constructor(name: string) { this.name = name; }
+      }
+    `;
+
+    const sub: Submission = { id: 'sub-partial', attemptId: 'att-partial', code, language: 'typescript', submittedAt: new Date() };
+    const res = await evaluator.evaluate(testProblem, sub);
+
+    const classCountFb = res.feedback.deterministic.ruleFeedbacks.find((f) => f.ruleId === 'CLASS_COUNT');
+    expect(classCountFb?.score).toBe(60);
+    expect(classCountFb?.passed).toBe(true);
+
+    const earnedPoints = Math.round((classCountFb!.score * 20) / 100);
+    expect(earnedPoints).toBe(12); // 60% of 20 = 12 points
   });
 
   it('detects un-encapsulated public fields and lowers encapsulation score', async () => {

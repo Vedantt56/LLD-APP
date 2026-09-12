@@ -26,7 +26,6 @@ describe('CompositeEvaluator Fallback & Attempt Lifecycle', () => {
     slug: 'parking-lot',
     description: 'Parking Lot LLD',
     requirements: [],
-    sampleStarterCode: '',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -83,5 +82,51 @@ describe('CompositeEvaluator Fallback & Attempt Lifecycle', () => {
 
     const failedAttempt = await repo.getAttemptById(attempt.id);
     expect(failedAttempt?.status).toBe('FAILED');
+  });
+
+  // PRE-SUBMISSION VALIDATION TEST: Non-TS submission rejected before submission creation or state change
+  it('rejects non-TypeScript submission with 400 error message, leaving attempt status unchanged in DRAFT and creating no submission or evaluation', async () => {
+    const repo = new InMemoryRepository();
+    const attemptService = new AttemptService(repo);
+
+    const attempt = await repo.createAttempt('problem-parking-lot');
+    expect(attempt.status).toBe('DRAFT');
+
+    const pythonCode = 'def main():\n    print("python")\n';
+
+    await expect(attemptService.submitSolution(attempt.id, pythonCode)).rejects.toThrowError(
+      'Invalid submission. This platform supports TypeScript only. Please submit your solution in TypeScript.'
+    );
+
+    const unchangedAttempt = await repo.getAttemptById(attempt.id);
+    expect(unchangedAttempt?.status).toBe('DRAFT');
+
+    const sub = await repo.getSubmissionByAttemptId(attempt.id);
+    expect(sub).toBeNull();
+
+    const evalRes = await repo.getEvaluationResultByAttemptId(attempt.id);
+    expect(evalRes).toBeNull();
+  });
+
+  // PRE-SUBMISSION VALIDATION TEST: Empty submission rejected before submission creation or state change
+  it('rejects empty submission with 400 error message "Submission cannot be empty.", leaving attempt status unchanged in DRAFT', async () => {
+    const repo = new InMemoryRepository();
+    const attemptService = new AttemptService(repo);
+
+    const attempt = await repo.createAttempt('problem-parking-lot');
+    expect(attempt.status).toBe('DRAFT');
+
+    await expect(attemptService.submitSolution(attempt.id, '   ')).rejects.toThrowError(
+      'Submission cannot be empty.'
+    );
+
+    const unchangedAttempt = await repo.getAttemptById(attempt.id);
+    expect(unchangedAttempt?.status).toBe('DRAFT');
+
+    const sub = await repo.getSubmissionByAttemptId(attempt.id);
+    expect(sub).toBeNull();
+
+    const evalRes = await repo.getEvaluationResultByAttemptId(attempt.id);
+    expect(evalRes).toBeNull();
   });
 });

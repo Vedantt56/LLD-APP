@@ -19,6 +19,9 @@ export class AttemptService {
     attemptId: string,
     code: string
   ): Promise<{ submission: Submission; attempt: Attempt; evaluationResult: EvaluationResult }> {
+    // 0. Validate code BEFORE creating submission or transitioning state
+    validateTypeScriptSubmission(code);
+
     // 1. Load Attempt
     const attempt = await this.repo.getAttemptById(attemptId);
     if (!attempt) {
@@ -46,9 +49,6 @@ export class AttemptService {
 
     // 6. Execute Evaluation (CompositeEvaluator handles LLM fallback internally)
     try {
-      // Validate TypeScript submission before running evaluators
-      validateTypeScriptSubmission(code);
-
       const evalResult = await this.evaluator.evaluate(problem, submission);
       
       // Save evaluation result

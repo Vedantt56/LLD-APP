@@ -7,21 +7,21 @@ interface ProblemPickerProps {
   problems: Problem[];
   selectedProblem: Problem | null;
   onSelectProblem: (problem: Problem) => void;
-  onResetStarterCode: () => void;
+  onClearCode: () => void;
 }
 
 export function ProblemPicker({
   problems,
   selectedProblem,
   onSelectProblem,
-  onResetStarterCode,
+  onClearCode,
 }: ProblemPickerProps) {
   return (
     <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm space-y-4">
       <div className="flex items-center justify-between border-b pb-3">
         <h2 className="text-xl font-bold text-gray-800">1. Select Problem</h2>
         <button
-          onClick={onResetStarterCode}
+          onClick={onClearCode}
           className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded transition"
           title="Clear code editor"
         >

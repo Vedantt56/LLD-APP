@@ -1,3 +1,10 @@
+export class EmptySubmissionError extends Error {
+  constructor(message: string = 'Submission cannot be empty.') {
+    super(message);
+    this.name = 'EmptySubmissionError';
+  }
+}
+
 export class InvalidTypeScriptSubmissionError extends Error {
   constructor(
     message: string = 'Invalid submission. This platform supports TypeScript only. Please submit your solution in TypeScript.'
@@ -76,7 +83,11 @@ export function isNonTypeScriptCode(code: string): boolean {
 }
 
 export function validateTypeScriptSubmission(code: string): void {
-  if (isNonTypeScriptCode(code)) {
+  const trimmed = (code || '').trim();
+  if (!trimmed) {
+    throw new EmptySubmissionError();
+  }
+  if (isNonTypeScriptCode(trimmed)) {
     throw new InvalidTypeScriptSubmissionError();
   }
 }

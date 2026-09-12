@@ -19,6 +19,32 @@ export default function LLDPlatformPage() {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Fetch attempt history for problem
+  const fetchAttemptHistory = useCallback(async (problemId: string) => {
+    try {
+      const res = await fetch(`/api/problems/${problemId}/attempts`);
+      if (res.ok) {
+        const history: Attempt[] = await res.json();
+        setAttemptsHistory(history);
+      }
+    } catch (err) {
+      console.error('Failed to load attempt history', err);
+    }
+  }, []);
+
+  // Handle Problem Selection
+  const handleSelectProblem = useCallback(
+    (problem: Problem) => {
+      setSelectedProblem(problem);
+      setCode('');
+      setActiveAttempt(null);
+      setEvaluationResult(null);
+      setErrorMsg(null);
+      fetchAttemptHistory(problem.id);
+    },
+    [fetchAttemptHistory]
+  );
+
   // 1. Fetch available problems
   useEffect(() => {
     async function loadProblems() {
@@ -35,33 +61,10 @@ export default function LLDPlatformPage() {
       }
     }
     loadProblems();
-  }, []);
-
-  // Fetch attempt history for problem
-  const fetchAttemptHistory = useCallback(async (problemId: string) => {
-    try {
-      const res = await fetch(`/api/problems/${problemId}/attempts`);
-      if (res.ok) {
-        const history: Attempt[] = await res.json();
-        setAttemptsHistory(history);
-      }
-    } catch (err) {
-      console.error('Failed to load attempt history', err);
-    }
-  }, []);
-
-  // Handle Problem Selection
-  const handleSelectProblem = (problem: Problem) => {
-    setSelectedProblem(problem);
-    setCode('');
-    setActiveAttempt(null);
-    setEvaluationResult(null);
-    setErrorMsg(null);
-    fetchAttemptHistory(problem.id);
-  };
+  }, [handleSelectProblem]);
 
   // Clear code editor
-  const handleResetStarterCode = () => {
+  const handleClearCode = () => {
     if (selectedProblem) {
       setCode('');
       setActiveAttempt(null);
@@ -193,7 +196,7 @@ export default function LLDPlatformPage() {
               problems={problems}
               selectedProblem={selectedProblem}
               onSelectProblem={handleSelectProblem}
-              onResetStarterCode={handleResetStarterCode}
+              onClearCode={handleClearCode}
             />
 
             <CodeEditor
@@ -226,7 +229,7 @@ export default function LLDPlatformPage() {
                   <strong className="text-gray-800">ts-morph AST</strong>: Structural class, encapsulation, naming, and interface rules.
                 </li>
                 <li>
-                  <strong className="text-gray-800">Gemini 2.0 Flash</strong>: Structured JSON-mode rubric evaluation (SRP, coupling, extensibility).
+                  <strong className="text-gray-800">Gemini Flash (gemini-flash-latest)</strong>: Structured JSON-mode rubric evaluation (SRP, coupling, extensibility).
                 </li>
                 <li>
                   <strong className="text-gray-800">Composite Fallback</strong>: Automatic fallback to deterministic-only results if LLM times out.

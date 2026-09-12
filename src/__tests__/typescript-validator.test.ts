@@ -76,4 +76,9 @@ func main() {
     expect(isNonTypeScriptCode(goCode)).toBe(true);
     expect(() => validateTypeScriptSubmission(goCode)).toThrow(InvalidTypeScriptSubmissionError);
   });
+
+  it('rejects empty or whitespace-only submissions with EmptySubmissionError', () => {
+    expect(() => validateTypeScriptSubmission('')).toThrow('Submission cannot be empty.');
+    expect(() => validateTypeScriptSubmission('   \n  \t ')).toThrow('Submission cannot be empty.');
+  });
 });

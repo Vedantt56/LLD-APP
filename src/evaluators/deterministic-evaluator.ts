@@ -6,15 +6,10 @@ import {
   EvaluationResult,
   DeterministicEvaluationResult,
   DeterministicRuleFeedback,
+  RULE_WEIGHTS,
 } from '../domain/evaluation';
 
-export const RULE_WEIGHTS = {
-  CLASS_COUNT: 0.20,
-  GOD_CLASS: 0.20,
-  ENCAPSULATION: 0.20,
-  INTERFACE_USAGE: 0.25,
-  NAMING: 0.15,
-} as const;
+export { RULE_WEIGHTS };
 
 export class DeterministicEvaluator implements EvaluationStrategy {
   async evaluate(problem: Problem, submission: Submission): Promise<EvaluationResult> {
@@ -38,6 +33,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
           {
             ruleId: 'SYNTAX_CHECK',
             category: 'NAMING',
+            score: 0,
             passed: false,
             message: `TypeScript code failed to parse: ${syntaxErrors.join('; ')}`,
           },
@@ -127,6 +123,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'CLASS_COUNT',
           category: 'CLASS_COUNT',
+          score: 0,
           passed: false,
           message: 'No domain classes found in submission.',
           details: { classCount: 0 },
@@ -140,6 +137,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'CLASS_COUNT',
           category: 'CLASS_COUNT',
+          score: 60,
           passed: true,
           message: 'Only 1 class found. Consider decomposing responsibility into specialized domain classes.',
           details: { classCount: 1 },
@@ -153,6 +151,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'CLASS_COUNT',
           category: 'CLASS_COUNT',
+          score: 100,
           passed: true,
           message: `Good class distribution: ${count} domain classes defined.`,
           details: { classCount: count },
@@ -165,6 +164,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
       feedback: {
         ruleId: 'CLASS_COUNT',
         category: 'CLASS_COUNT',
+        score: 80,
         passed: true,
         message: `${count} classes defined. Ensure class responsibilities remain focused.`,
         details: { classCount: count },
@@ -181,6 +181,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'GOD_CLASS',
           category: 'GOD_CLASS',
+          score: 100,
           passed: true,
           message: 'No classes present to evaluate for God-class antipattern.',
         },
@@ -205,6 +206,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
           feedback: {
             ruleId: 'GOD_CLASS',
             category: 'GOD_CLASS',
+            score: 30,
             passed: false,
             message: `God-class detected: '${clsInfo.name}' has ${clsInfo.memberCount} members (${percentage.toFixed(1)}% of total codebase members).`,
             details: { godClassName: clsInfo.name, memberCount: clsInfo.memberCount, percentage },
@@ -218,6 +220,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
       feedback: {
         ruleId: 'GOD_CLASS',
         category: 'GOD_CLASS',
+        score: 100,
         passed: true,
         message: 'No God-classes detected. Class member responsibilities are well distributed.',
         details: { totalMembers },
@@ -251,6 +254,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'ENCAPSULATION',
           category: 'ENCAPSULATION',
+          score: 100,
           passed: true,
           message: 'No instance properties to evaluate for encapsulation.',
         },
@@ -267,6 +271,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'ENCAPSULATION',
           category: 'ENCAPSULATION',
+          score,
           passed,
           message: `Encapsulation warning: ${publicPropsCount} of ${totalInstanceProps} instance properties are declared public (${publicPropNames.join(', ')}). Use private or protected modifiers with getters/setters.`,
           details: { totalInstanceProps, publicPropsCount, publicPropNames },
@@ -279,6 +284,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
       feedback: {
         ruleId: 'ENCAPSULATION',
         category: 'ENCAPSULATION',
+        score: 100,
         passed: true,
         message: 'Excellent encapsulation! All instance fields use private or protected access modifiers.',
         details: { totalInstanceProps },
@@ -300,6 +306,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'INTERFACE_USAGE',
           category: 'INTERFACE_USAGE',
+          score: 100,
           passed: true,
           message: `Structural report: ${userInterfaces.length} interface(s) defined in solution. (No specific interface names required for this problem).`,
           details: { interfaceCount: userInterfaces.length },
@@ -342,6 +349,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'INTERFACE_USAGE',
           category: 'INTERFACE_USAGE',
+          score,
           passed: false,
           message: `Interface usage check: Implemented: [${satisfied.join(', ')}]; Missing or unimplemented: [${missingOrUnimplemented.join(', ')}].`,
           details: { expectedInterfaces, satisfied, missingOrUnimplemented },
@@ -354,6 +362,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
       feedback: {
         ruleId: 'INTERFACE_USAGE',
         category: 'INTERFACE_USAGE',
+        score: 100,
         passed: true,
         message: `All required interfaces (${expectedInterfaces.join(', ')}) are defined and implemented.`,
         details: { expectedInterfaces, satisfied },
@@ -408,6 +417,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'NAMING',
           category: 'NAMING',
+          score: 100,
           passed: true,
           message: 'No symbols found to evaluate for naming conventions.',
         },
@@ -423,6 +433,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
         feedback: {
           ruleId: 'NAMING',
           category: 'NAMING',
+          score,
           passed,
           message: `Naming convention issues: ${violationMessages.join('; ')}.`,
           details: { totalSymbols, namingViolations, violationMessages },
@@ -435,6 +446,7 @@ export class DeterministicEvaluator implements EvaluationStrategy {
       feedback: {
         ruleId: 'NAMING',
         category: 'NAMING',
+        score: 100,
         passed: true,
         message: 'All classes, interfaces, and methods follow TypeScript naming conventions (PascalCase / camelCase).',
         details: { totalSymbols },
